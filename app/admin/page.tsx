@@ -83,22 +83,25 @@ export default function AdminPage() {
     e.preventDefault()
     setIsLoading(true)
     const formData = new FormData(e.currentTarget)
+    
     try {
-      if (editId) {
-        await editDesign(editId, formData)
-        toast.success("Desain berhasil diperbarui!")
+      const result = editId 
+        ? await editDesign(editId, formData) 
+        : await uploadDesign(formData)
+
+      if (result?.error) {
+        toast.error(result.error) // Munculkan error asli ke layar
       } else {
-        await uploadDesign(formData)
-        toast.success("Desain berhasil ditambahkan!")
+        toast.success(editId ? "Desain berhasil diperbarui!" : "Desain berhasil ditambahkan!")
+        resetForm()
+        await loadDesigns()
       }
-      resetForm()
-      await loadDesigns()
     } catch (error: unknown) {
-        if (error instanceof Error) {
-            toast.error(error.message || "Terjadi kesalahan")
-        } else {
-            toast.error("Terjadi kesalahan")
-        }
+      if (error instanceof Error) {
+        toast.error(error.message)
+      } else {
+        toast.error("Terjadi kesalahan yang tidak diketahui")
+      }
     } finally {
       setIsLoading(false)
     }
@@ -106,9 +109,13 @@ export default function AdminPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteDesign(id)
-      toast.success("Desain berhasil dihapus!")
-      await loadDesigns()
+      const result = await deleteDesign(id)
+      if (result?.error) {
+        toast.error(result.error)
+      } else {
+        toast.success("Desain berhasil dihapus!")
+        await loadDesigns()
+      }
     } catch {
       toast.error("Gagal menghapus desain")
     }

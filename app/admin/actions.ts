@@ -8,11 +8,16 @@ import { createClient } from '@supabase/supabase-js'
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 
-// Menggunakan SERVICE_ROLE_KEY agar bisa bypass blokir RLS saat upload
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! 
-)
+// Fungsi aman untuk mengecek apakah kunci Vercel sudah diisi
+const getSupabase = () => {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("Kunci Supabase Service Role belum disetel di Vercel Environment Variables")
+  }
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  )
+}
 
 export async function getDesigns(search: string = "", page: number = 1, limit: number = 5) {
   const skip = (page - 1) * limit
@@ -32,108 +37,114 @@ export async function getDesigns(search: string = "", page: number = 1, limit: n
 }
 
 export async function uploadDesign(formData: FormData) {
-  const auth = await verifyAuth()
-  if (!auth) throw new Error('Akses ditolak')
+  try {
+    const auth = await verifyAuth()
+    if (!auth) return { error: 'Akses ditolak. Sesi tidak valid.' }
 
-  const title = formData.get('title') as string
-  const description = formData.get('description') as string
-  const price = Number(formData.get('price'))
-  const file = formData.get('image') as File
+    const title = formData.get('title') as string
+    const description = formData.get('description') as string
+    const price = Number(formData.get('price'))
+    const file = formData.get('image') as File
 
-  if (!file || file.size === 0) throw new Error('Gambar tidak ditemukan')
-  if (!ALLOWED_TYPES.includes(file.type)) throw new Error('Format file harus JPG, PNG, atau WEBP')
-  if (file.size > MAX_FILE_SIZE) throw new Error('Ukuran file maksimal 5MB')
-
-  const ext = file.name.split('.').pop()
-  const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
-
-  // Konversi File ke Buffer agar stabil di Node.js/Vercel
-  const arrayBuffer = await file.arrayBuffer()
-  const buffer = Buffer.from(arrayBuffer)
-
-  const { error: uploadError } = await supabase.storage
-    .from('designs')
-    .upload(filename, buffer, { 
-      cacheControl: '3600', 
-      upsert: false,
-      contentType: file.type
-    })
-
-  if (uploadError) throw new Error('Gagal mengunggah gambar: ' + uploadError.message)
-
-  const { data: { publicUrl } } = supabase.storage.from('designs').getPublicUrl(filename)
-
-  await prisma.design.create({
-    data: { title, description, price, imageUrl: publicUrl }
-  })
-
-  revalidatePath('/')
-  revalidatePath('/admin')
-}
-
-export async function editDesign(id: string, formData: FormData) {
-  const auth = await verifyAuth()
-  if (!auth) throw new Error('Akses ditolak')
-
-  const title = formData.get('title') as string
-  const description = formData.get('description') as string
-  const price = Number(formData.get('price'))
-  const file = formData.get('image') as File | null
-
-  type DataToUpdate = {
-    title: string;
-    description: string;
-    price: number;
-    imageUrl?: string;
-  }
-
-  const dataToUpdate: DataToUpdate = { title, description, price }
-
-  if (file && file.size > 0) {
-    if (!ALLOWED_TYPES.includes(file.type)) throw new Error('Format file harus JPG, PNG, atau WEBP')
-    if (file.size > MAX_FILE_SIZE) throw new Error('Ukuran file maksimal 5MB')
+    if (!file || file.size === 0) return { error: 'Gambar tidak ditemukan.' }
+    if (!ALLOWED_TYPES.includes(file.type)) return { error: 'Format file harus JPG, PNG, atau WEBP.' }
+    if (file.size > MAX_FILE_SIZE) return { error: 'Ukuran file maksimal 5MB.' }
 
     const ext = file.name.split('.').pop()
     const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
 
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-
+    const supabase = getSupabase()
+    
+    // Upload objek File secara langsung (didukung penuh oleh Supabase)
     const { error: uploadError } = await supabase.storage
       .from('designs')
-      .upload(filename, buffer, { 
-        cacheControl: '3600', 
-        upsert: false,
-        contentType: file.type 
-      })
+      .upload(filename, file, { cacheControl: '3600', upsert: false })
 
-    if (uploadError) throw new Error('Gagal mengunggah gambar baru')
+    if (uploadError) return { error: 'Gagal mengunggah gambar ke Supabase: ' + uploadError.message }
 
     const { data: { publicUrl } } = supabase.storage.from('designs').getPublicUrl(filename)
-    dataToUpdate.imageUrl = publicUrl
+
+    await prisma.design.create({
+      data: { title, description, price, imageUrl: publicUrl }
+    })
+
+    revalidatePath('/')
+    revalidatePath('/admin')
+    
+    return { success: true }
+  } catch (error: unknown) {
+    if (error instanceof Error) return { error: error.message }
+    return { error: 'Terjadi kesalahan sistem yang tidak diketahui.' }
   }
+}
 
-  await prisma.design.update({ where: { id }, data: dataToUpdate })
+export async function editDesign(id: string, formData: FormData) {
+  try {
+    const auth = await verifyAuth()
+    if (!auth) return { error: 'Akses ditolak. Sesi tidak valid.' }
 
-  revalidatePath('/')
-  revalidatePath('/admin')
+    const title = formData.get('title') as string
+    const description = formData.get('description') as string
+    const price = Number(formData.get('price'))
+    const file = formData.get('image') as File | null
+
+    type DataToUpdate = { title: string; description: string; price: number; imageUrl?: string; }
+    const dataToUpdate: DataToUpdate = { title, description, price }
+
+    if (file && file.size > 0) {
+      if (!ALLOWED_TYPES.includes(file.type)) return { error: 'Format file harus JPG, PNG, atau WEBP.' }
+      if (file.size > MAX_FILE_SIZE) return { error: 'Ukuran file maksimal 5MB.' }
+
+      const ext = file.name.split('.').pop()
+      const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
+
+      const supabase = getSupabase()
+      const { error: uploadError } = await supabase.storage
+        .from('designs')
+        .upload(filename, file, { cacheControl: '3600', upsert: false })
+
+      if (uploadError) return { error: 'Gagal mengunggah gambar baru: ' + uploadError.message }
+
+      const { data: { publicUrl } } = supabase.storage.from('designs').getPublicUrl(filename)
+      dataToUpdate.imageUrl = publicUrl
+    }
+
+    await prisma.design.update({ where: { id }, data: dataToUpdate })
+
+    revalidatePath('/')
+    revalidatePath('/admin')
+    
+    return { success: true }
+  } catch (error: unknown) {
+    if (error instanceof Error) return { error: error.message }
+    return { error: 'Terjadi kesalahan sistem yang tidak diketahui.' }
+  }
 }
 
 export async function deleteDesign(id: string) {
-  const auth = await verifyAuth()
-  if (!auth) throw new Error('Akses ditolak')
+  try {
+    const auth = await verifyAuth()
+    if (!auth) return { error: 'Akses ditolak. Sesi tidak valid.' }
 
-  const design = await prisma.design.findUnique({ where: { id } })
-  
-  if (design && design.imageUrl) {
-    const filename = design.imageUrl.split('/').pop()
-    if (filename) {
-      await supabase.storage.from('designs').remove([filename])
+    const design = await prisma.design.findUnique({ where: { id } })
+    
+    // Otomatis hapus gambar di bucket Supabase jika desain dihapus
+    if (design && design.imageUrl) {
+      const filename = design.imageUrl.split('/').pop()
+      if (filename) {
+        const supabase = getSupabase()
+        await supabase.storage.from('designs').remove([filename])
+      }
     }
-  }
 
-  await prisma.design.delete({ where: { id } })
-  
-  revalidatePath('/')
-  revalidatePath('/admin')
+    await prisma.design.delete({ where: { id } })
+    
+    revalidatePath('/')
+    revalidatePath('/admin')
+    
+    return { success: true }
+  } catch (error: unknown) {
+    if (error instanceof Error) return { error: error.message }
+    return { error: 'Terjadi kesalahan sistem yang tidak diketahui.' }
+  }
 }
