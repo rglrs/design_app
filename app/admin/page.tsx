@@ -55,6 +55,7 @@ export default function AdminPage() {
   }, [search, page])
 
   useEffect(() => {
+    document.title = "Manajemen Desain | DAFIS"
     const timer = setTimeout(() => {
       loadDesigns()
     }, 400)

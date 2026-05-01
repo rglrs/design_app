@@ -12,7 +12,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#fafafa] text-[#1a1a1a] flex flex-col justify-center items-center p-4 sm:p-6 selection:bg-orange-100 selection:text-orange-900">
       <div className="w-full max-w-md">
         <div className="text-center mb-8 sm:mb-10">
-          <span className="text-xl sm:text-2xl font-bold tracking-tighter block mb-2">VISUAL ARCHIVE</span>
+          <span className="text-xl sm:text-2xl font-bold tracking-tighter block mb-2">DAFIS</span>
           <h1 className="text-sm sm:text-base text-zinc-500">Autentikasi Dashboard</h1>
         </div>
         <form action={formAction} className="bg-white p-6 sm:p-10 rounded-2xl sm:rounded-3xl shadow-sm border border-black/5 space-y-5 sm:space-y-6">

@@ -110,7 +110,7 @@ export default function GuestChat() {
       {isOpen ? (
         <div className="w-80 h-[28rem] bg-white border border-zinc-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           <div className="bg-zinc-900 text-white px-4 py-3 flex justify-between items-center">
-            <span className="font-bold text-sm">Customer Support</span>
+            <span className="font-bold text-sm uppercase tracking-wider">DAFIS</span>
             <button onClick={() => setIsOpen(false)} className="hover:text-zinc-300 transition-colors">
               <X className="w-4 h-4" />
             </button>

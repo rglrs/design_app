@@ -12,18 +12,18 @@ import {
 } from "@/components/ui/pagination"
 
 export const metadata = {
-  title: 'Visual Archive Premium Design Assets',
+  title: 'DAFIS | Premium Design Assets',
   description: 'Curated high-quality design assets for modern creators.',
   openGraph: {
-    title: 'Visual Archive',
+    title: 'DAFIS',
     description: 'Curated high-quality design assets for modern creators.',
     type: 'website',
   }
 }
 
 type PageProps = {
-  params: Promise<Record<string, never>>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  params: Promise<Record<string, never>>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export default async function Home(props: PageProps) {
@@ -57,7 +57,7 @@ export default async function Home(props: PageProps) {
     <main className="min-h-screen bg-[#fafafa] text-[#1a1a1a] selection:bg-orange-100 selection:text-orange-900">
       <nav className="sticky top-0 z-50 border-b border-black/5 bg-white/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
-          <span className="text-lg md:text-xl font-bold tracking-tighter">VISUAL ARCHIVE</span>
+          <span className="text-lg md:text-xl font-bold tracking-tighter">DAFIS</span>
           <div className="flex gap-4 md:gap-8 text-sm font-medium">
             <Link href="#" className="hover:text-orange-600 transition-colors">Katalog</Link>
             <Link href="/login" className="hover:text-orange-600 transition-colors">Admin</Link>
@@ -127,7 +127,7 @@ export default async function Home(props: PageProps) {
 
       <footer className="border-t border-black/5 py-8 md:py-12">
         <div className="max-w-7xl mx-auto px-4 md:px-6 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
-          <p className="text-sm text-zinc-400">&copy; 2026 Visual Archive. All rights reserved.</p>
+          <p className="text-sm text-zinc-400">&copy; 2026 DAFIS. All rights reserved.</p>
           <div className="flex gap-4 md:gap-6">
             <div className="w-10 h-10 rounded-full border border-zinc-200 flex items-center justify-center hover:bg-black hover:text-white transition-all cursor-pointer">IG</div>
             <div className="w-10 h-10 rounded-full border border-zinc-200 flex items-center justify-center hover:bg-black hover:text-white transition-all cursor-pointer">TW</div>

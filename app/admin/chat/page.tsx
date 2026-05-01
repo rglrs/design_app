@@ -5,6 +5,17 @@ import { Send, User, MessageSquare, ChevronLeft, Trash2 } from 'lucide-react'
 import { getAdminSessions, getChatHistory, sendMessage, markMessagesAsRead, deleteChatSession } from '@/app/actions/chat'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 type Message = {
   id: string
@@ -33,6 +44,7 @@ export default function AdminChat() {
   const activeSessionRef = useRef<Session | null>(null)
 
   useEffect(() => {
+    document.title = "Pusat Pesan | DAFIS"
     activeSessionRef.current = activeSession
   }, [activeSession])
 
@@ -116,10 +128,7 @@ export default function AdminChat() {
     await sendMessage(activeSession.guestId, messageContent, 'ADMIN')
   }
 
-  const handleDeleteSession = async (e: React.MouseEvent, guestId: string) => {
-    e.stopPropagation()
-    if (!confirm('Apakah Anda yakin ingin menghapus seluruh percakapan ini?')) return
-
+  const handleDeleteSession = async (guestId: string) => {
     try {
       await deleteChatSession(guestId)
       setSessions((prev) => prev.filter((s) => s.guestId !== guestId))
@@ -128,7 +137,7 @@ export default function AdminChat() {
         setMessages([])
       }
       toast.success('Percakapan berhasil dihapus')
-    } catch {
+    } catch (error) {
       toast.error('Gagal menghapus percakapan')
     }
   }
@@ -173,12 +182,33 @@ export default function AdminChat() {
                   )}
                 </div>
               </div>
-              <button
-                onClick={(e) => handleDeleteSession(e, session.guestId)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-zinc-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <AlertDialog>
+                <AlertDialogTrigger
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-zinc-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </AlertDialogTrigger>
+                <AlertDialogContent onClick={(e) => e.stopPropagation()} className="bg-white border-zinc-200 max-w-[90vw] sm:max-w-lg rounded-2xl">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-zinc-900">Hapus Percakapan?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-zinc-500 text-sm">
+                      Tindakan ini tidak dapat dibatalkan. Seluruh riwayat obrolan dengan kontak ini akan dihapus secara permanen dari database.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0 mt-4 sm:mt-0">
+                    <AlertDialogCancel className="border-zinc-200 hover:bg-zinc-100 text-zinc-900 w-full sm:w-auto mt-0">
+                      Batal
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleDeleteSession(session.guestId)}
+                      className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
+                    >
+                      Ya, Hapus
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           ))}
           {sessions.length === 0 && (
@@ -212,13 +242,30 @@ export default function AdminChat() {
                   </span>
                 </div>
               </div>
-              <button
-                onClick={(e) => handleDeleteSession(e, activeSession.guestId)}
-                className="p-2.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                title="Hapus kontak"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
+              <AlertDialog>
+                <AlertDialogTrigger className="p-2.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                  <Trash2 className="w-5 h-5" />
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-white border-zinc-200 max-w-[90vw] sm:max-w-lg rounded-2xl">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-zinc-900">Hapus Percakapan?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-zinc-500 text-sm">
+                      Tindakan ini tidak dapat dibatalkan. Seluruh riwayat obrolan dengan kontak ini akan dihapus secara permanen dari database.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0 mt-4 sm:mt-0">
+                    <AlertDialogCancel className="border-zinc-200 hover:bg-zinc-100 text-zinc-900 w-full sm:w-auto mt-0">
+                      Batal
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleDeleteSession(activeSession.guestId)}
+                      className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
+                    >
+                      Ya, Hapus
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-zinc-50/50">
