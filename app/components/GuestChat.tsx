@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { MessageCircle, X, Send } from 'lucide-react'
-import { initializeChat, sendMessage, getChatHistory, markMessagesAsRead, getUnreadGuestCount } from '@/app/actions/chat'
+import { sendMessage, getChatHistory, markMessagesAsRead, getUnreadGuestCount } from '@/app/actions/chat'
 import { supabase } from '@/lib/supabase'
 
 type Message = {
@@ -38,10 +38,9 @@ export default function GuestChat() {
       }
       setGuestId(currentGuestId)
 
-      await initializeChat(currentGuestId)
-      const history = await getChatHistory(currentGuestId as string)
+      const history = await getChatHistory(currentGuestId)
       setMessages(history)
-      const unread = await getUnreadGuestCount(currentGuestId as string)
+      const unread = await getUnreadGuestCount(currentGuestId)
       setUnreadCount(unread)
     }
 

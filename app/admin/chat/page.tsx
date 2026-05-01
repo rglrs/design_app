@@ -62,8 +62,8 @@ export default function AdminChat() {
         const newMsg = payload.new as Message
         newMsg.createdAt = new Date(newMsg.createdAt)
 
-        setSessions(prev => {
-          const idx = prev.findIndex(s => s.id === newMsg.sessionId)
+        setSessions((prev) => {
+          const idx = prev.findIndex((s) => s.id === newMsg.sessionId)
           if (idx === -1) {
             getAdminSessions().then(setSessions)
             return prev
@@ -127,8 +127,8 @@ export default function AdminChat() {
               key={session.id}
               onClick={() => {
                 setActiveSession(session)
-                setSessions(prev => 
-                  prev.map(s => s.id === session.id ? { ...s, unreadCount: 0 } : s)
+                setSessions((prev) => 
+                  prev.map((s) => s.id === session.id ? { ...s, unreadCount: 0 } : s)
                 )
               }}
               className={`w-full text-left p-4 border-b border-zinc-100 hover:bg-zinc-100 transition-colors ${activeSession?.id === session.id ? 'bg-zinc-100' : ''}`}

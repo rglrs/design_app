@@ -11,11 +11,11 @@ export async function initializeChat(guestId: string) {
 }
 
 export async function sendMessage(guestId: string, content: string, sender: 'GUEST' | 'ADMIN') {
-  const session = await prisma.chatSession.findUnique({
-    where: { guestId }
+  const session = await prisma.chatSession.upsert({
+    where: { guestId },
+    update: {},
+    create: { guestId }
   })
-
-  if (!session) throw new Error('Session not found')
 
   return prisma.chatMessage.create({
     data: {
@@ -40,6 +40,11 @@ export async function getChatHistory(guestId: string) {
 
 export async function getAdminSessions() {
   const sessions = await prisma.chatSession.findMany({
+    where: {
+      messages: {
+        some: {}
+      }
+    },
     include: {
       messages: {
         orderBy: { createdAt: 'desc' },
@@ -59,7 +64,7 @@ export async function getAdminSessions() {
     orderBy: { updatedAt: 'desc' }
   })
   
-  return sessions.map(s => ({
+  return sessions.map((s) => ({
     ...s,
     unreadCount: s._count.messages
   }))
