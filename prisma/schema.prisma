@@ -26,3 +26,21 @@ model Design {
   imageUrl    String
   createdAt   DateTime @default(now())
 }
+
+model ChatSession {
+  id        String        @id @default(cuid())
+  guestId   String        @unique
+  messages  ChatMessage[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sender    String
+  content   String
+  isRead    Boolean     @default(false)
+  createdAt DateTime    @default(now())
+}

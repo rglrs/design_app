@@ -7,16 +7,28 @@ const key = new TextEncoder().encode(secretKey)
 
 export default async function proxy(request: NextRequest) {
   const session = request.cookies.get('admin_session')?.value
+  const pathname = request.nextUrl.pathname
 
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    if (!session) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-    
+  let isValid = false
+
+  if (session) {
     try {
       await jwtVerify(session, key)
+      isValid = true
     } catch {
+      isValid = false
+    }
+  }
+
+  if (pathname.startsWith('/admin')) {
+    if (!isValid) {
       return NextResponse.redirect(new URL('/login', request.url))
+    }
+  }
+
+  if (pathname.startsWith('/login')) {
+    if (isValid) {
+      return NextResponse.redirect(new URL('/admin', request.url))
     }
   }
 
@@ -24,5 +36,5 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/login'],
 }

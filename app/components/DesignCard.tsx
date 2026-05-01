@@ -14,7 +14,7 @@ export default function DesignCard({ design }: { design: Design }) {
   return (
     <div className="group cursor-pointer w-full">
       <div
-        className="relative aspect-[4/5] overflow-hidden bg-zinc-200 rounded-2xl mb-4 sm:mb-6 shadow-sm w-full"
+        className="relative aspect-square overflow-hidden bg-zinc-200 rounded-2xl mb-4 sm:mb-6 shadow-sm w-full"
         onContextMenu={(e) => e.preventDefault()}
       >
         <Image

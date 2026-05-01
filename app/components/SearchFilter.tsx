@@ -10,14 +10,17 @@ export default function SearchFilter() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString())
-      if (query) {
-        params.set('q', query)
-      } else {
-        params.delete('q')
+      const currentQ = searchParams.get('q') || ''
+      if (query !== currentQ) {
+        const params = new URLSearchParams(searchParams.toString())
+        if (query) {
+          params.set('q', query)
+        } else {
+          params.delete('q')
+        }
+        params.set('page', '1')
+        router.push(`/?${params.toString()}`, { scroll: false })
       }
-      params.set('page', '1')
-      router.push(`/?${params.toString()}`, { scroll: false })
     }, 400)
 
     return () => clearTimeout(timer)

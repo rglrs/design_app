@@ -4,11 +4,12 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { verifyAuth } from '@/lib/auth'
 import { createClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 
-// Fungsi aman untuk mengecek apakah kunci Vercel sudah diisi
 const getSupabase = () => {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error("Kunci Supabase Service Role belum disetel di Vercel Environment Variables")
@@ -17,6 +18,12 @@ const getSupabase = () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   )
+}
+
+export async function logoutAction() {
+  const cookieStore = await cookies()
+  cookieStore.delete('admin_session')
+  redirect('/login')
 }
 
 export async function getDesigns(search: string = "", page: number = 1, limit: number = 5) {
@@ -55,7 +62,6 @@ export async function uploadDesign(formData: FormData) {
 
     const supabase = getSupabase()
     
-    // Upload objek File secara langsung (didukung penuh oleh Supabase)
     const { error: uploadError } = await supabase.storage
       .from('designs')
       .upload(filename, file, { cacheControl: '3600', upsert: false })
@@ -128,7 +134,6 @@ export async function deleteDesign(id: string) {
 
     const design = await prisma.design.findUnique({ where: { id } })
     
-    // Otomatis hapus gambar di bucket Supabase jika desain dihapus
     if (design && design.imageUrl) {
       const filename = design.imageUrl.split('/').pop()
       if (filename) {
