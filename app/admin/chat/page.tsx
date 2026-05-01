@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react'
-import { Send, User, MessageSquare, ChevronLeft } from 'lucide-react'
-import { getAdminSessions, getChatHistory, sendMessage, markMessagesAsRead } from '@/app/actions/chat'
+import { Send, User, MessageSquare, ChevronLeft, Trash2 } from 'lucide-react'
+import { getAdminSessions, getChatHistory, sendMessage, markMessagesAsRead, deleteChatSession } from '@/app/actions/chat'
 import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 
 type Message = {
   id: string
@@ -115,6 +116,23 @@ export default function AdminChat() {
     await sendMessage(activeSession.guestId, messageContent, 'ADMIN')
   }
 
+  const handleDeleteSession = async (e: React.MouseEvent, guestId: string) => {
+    e.stopPropagation()
+    if (!confirm('Apakah Anda yakin ingin menghapus seluruh percakapan ini?')) return
+
+    try {
+      await deleteChatSession(guestId)
+      setSessions((prev) => prev.filter((s) => s.guestId !== guestId))
+      if (activeSession?.guestId === guestId) {
+        setActiveSession(null)
+        setMessages([])
+      }
+      toast.success('Percakapan berhasil dihapus')
+    } catch {
+      toast.error('Gagal menghapus percakapan')
+    }
+  }
+
   return (
     <div className="flex h-full bg-white relative">
       <div className={`w-full md:w-80 border-r border-zinc-200 bg-zinc-50 flex flex-col shrink-0 ${activeSession ? 'hidden md:flex' : 'flex'}`}>
@@ -123,7 +141,7 @@ export default function AdminChat() {
         </div>
         <div className="flex-1 overflow-y-auto">
           {sessions.map((session) => (
-            <button
+            <div
               key={session.id}
               onClick={() => {
                 setActiveSession(session)
@@ -131,13 +149,13 @@ export default function AdminChat() {
                   prev.map((s) => s.id === session.id ? { ...s, unreadCount: 0 } : s)
                 )
               }}
-              className={`w-full text-left p-4 border-b border-zinc-100 hover:bg-zinc-100 transition-colors ${activeSession?.id === session.id ? 'bg-zinc-100' : ''}`}
+              className={`group w-full text-left p-4 border-b border-zinc-100 hover:bg-zinc-100 transition-colors cursor-pointer relative ${activeSession?.id === session.id ? 'bg-zinc-100' : ''}`}
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-zinc-200 flex items-center justify-center text-zinc-500 shrink-0">
                   <User className="w-5 h-5" />
                 </div>
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 overflow-hidden pr-6">
                   <div className="flex justify-between items-center mb-0.5">
                     <div className="font-medium text-sm text-zinc-900 truncate">
                       {session.guestId.replace('guest_', 'Guest #')}
@@ -155,7 +173,13 @@ export default function AdminChat() {
                   )}
                 </div>
               </div>
-            </button>
+              <button
+                onClick={(e) => handleDeleteSession(e, session.guestId)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-zinc-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           ))}
           {sessions.length === 0 && (
             <div className="p-6 text-center text-sm text-zinc-500">
@@ -168,24 +192,33 @@ export default function AdminChat() {
       <div className={`flex-1 flex flex-col bg-white ${!activeSession ? 'hidden md:flex' : 'flex'}`}>
         {activeSession ? (
           <>
-            <div className="p-4 md:p-6 border-b border-zinc-200 bg-white flex items-center gap-3 md:gap-4">
-              <button 
-                onClick={() => setActiveSession(null)}
-                className="md:hidden p-2 -ml-2 text-zinc-500 hover:bg-zinc-100 rounded-lg"
+            <div className="p-4 md:p-6 border-b border-zinc-200 bg-white flex justify-between items-center">
+              <div className="flex items-center gap-3 md:gap-4">
+                <button 
+                  onClick={() => setActiveSession(null)}
+                  className="md:hidden p-2 -ml-2 text-zinc-500 hover:bg-zinc-100 rounded-lg"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+                  <User className="w-5 h-5 md:w-6 md:h-6" />
+                </div>
+                <div className="overflow-hidden">
+                  <h3 className="text-base md:text-lg font-bold text-zinc-900 truncate">
+                    {activeSession.guestId.replace('guest_', 'Guest #')}
+                  </h3>
+                  <span className="text-[10px] md:text-xs text-green-600 font-medium flex items-center gap-1 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span> Online
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={(e) => handleDeleteSession(e, activeSession.guestId)}
+                className="p-2.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                title="Hapus kontak"
               >
-                <ChevronLeft className="w-6 h-6" />
+                <Trash2 className="w-5 h-5" />
               </button>
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
-                <User className="w-5 h-5 md:w-6 md:h-6" />
-              </div>
-              <div className="overflow-hidden">
-                <h3 className="text-base md:text-lg font-bold text-zinc-900 truncate">
-                  {activeSession.guestId.replace('guest_', 'Guest #')}
-                </h3>
-                <span className="text-[10px] md:text-xs text-green-600 font-medium flex items-center gap-1 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span> Online
-                </span>
-              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-zinc-50/50">

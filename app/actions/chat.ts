@@ -100,3 +100,9 @@ export async function getUnreadGuestCount(guestId: string) {
     }
   })
 }
+
+export async function deleteChatSession(guestId: string) {
+  return prisma.chatSession.delete({
+    where: { guestId }
+  })
+}
