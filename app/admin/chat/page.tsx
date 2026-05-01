@@ -42,13 +42,14 @@ export default function AdminChat() {
   useEffect(() => {
     if (!activeSession) return
 
-    getChatHistory(activeSession.guestId).then(setMessages)
-    markMessagesAsRead(activeSession.guestId, 'ADMIN')
+    const loadSessionData = async () => {
+      const history = await getChatHistory(activeSession.guestId)
+      setMessages(history)
+      await markMessagesAsRead(activeSession.guestId, 'ADMIN')
+    }
     
-    setSessions(prev => 
-      prev.map(s => s.id === activeSession.id ? { ...s, unreadCount: 0 } : s)
-    )
-  }, [activeSession?.id, activeSession])
+    loadSessionData()
+  }, [activeSession])
 
   useEffect(() => {
     const channel = supabase
@@ -124,7 +125,12 @@ export default function AdminChat() {
           {sessions.map((session) => (
             <button
               key={session.id}
-              onClick={() => setActiveSession(session)}
+              onClick={() => {
+                setActiveSession(session)
+                setSessions(prev => 
+                  prev.map(s => s.id === session.id ? { ...s, unreadCount: 0 } : s)
+                )
+              }}
               className={`w-full text-left p-4 border-b border-zinc-100 hover:bg-zinc-100 transition-colors ${activeSession?.id === session.id ? 'bg-zinc-100' : ''}`}
             >
               <div className="flex items-center gap-3">

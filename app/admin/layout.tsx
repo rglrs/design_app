@@ -11,10 +11,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isMobileOpen, setIsMobileOpen] = useState(false)
 
   useEffect(() => {
-    setIsMobileOpen(false)
+    const handleCloseMenu = async () => {
+      setIsMobileOpen(false)
+    }
+    handleCloseMenu()
   }, [pathname])
 
-  const SidebarContent = () => (
+  const sidebarContent = (
     <>
       <div className="p-6 border-b border-zinc-200 flex justify-between items-center shrink-0">
         <h1 className="text-xl font-bold tracking-tight">Admin Panel</h1>
@@ -26,6 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         <Link 
           href="/admin" 
+          onClick={() => setIsMobileOpen(false)}
           className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${pathname === '/admin' ? 'bg-zinc-100 font-bold text-zinc-900' : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900'}`}
         >
           <LayoutDashboard className="w-5 h-5" />
@@ -33,6 +37,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </Link>
         <Link 
           href="/admin/chat" 
+          onClick={() => setIsMobileOpen(false)}
           className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${pathname === '/admin/chat' ? 'bg-zinc-100 font-bold text-zinc-900' : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900'}`}
         >
           <MessageSquare className="w-5 h-5" />
@@ -70,11 +75,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-zinc-200 flex flex-col transform transition-transform duration-300 md:hidden ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <SidebarContent />
+        {sidebarContent}
       </aside>
 
       <aside className="w-64 bg-white border-r border-zinc-200 hidden md:flex flex-col shrink-0">
-        <SidebarContent />
+        {sidebarContent}
       </aside>
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden">

@@ -30,17 +30,22 @@ export default function GuestChat() {
   }, [isOpen])
 
   useEffect(() => {
-    let currentGuestId = localStorage.getItem('guest_id')
-    if (!currentGuestId) {
-      currentGuestId = `guest_${Math.random().toString(36).substring(2, 15)}`
-      localStorage.setItem('guest_id', currentGuestId)
-    }
-    setGuestId(currentGuestId)
+    const initializeChatData = async () => {
+      let currentGuestId = localStorage.getItem('guest_id')
+      if (!currentGuestId) {
+        currentGuestId = `guest_${Math.random().toString(36).substring(2, 15)}`
+        localStorage.setItem('guest_id', currentGuestId)
+      }
+      setGuestId(currentGuestId)
 
-    initializeChat(currentGuestId).then(() => {
-      getChatHistory(currentGuestId as string).then(setMessages)
-      getUnreadGuestCount(currentGuestId as string).then(setUnreadCount)
-    })
+      await initializeChat(currentGuestId)
+      const history = await getChatHistory(currentGuestId as string)
+      setMessages(history)
+      const unread = await getUnreadGuestCount(currentGuestId as string)
+      setUnreadCount(unread)
+    }
+
+    initializeChatData()
   }, [])
 
   useEffect(() => {
@@ -78,8 +83,12 @@ export default function GuestChat() {
 
   useEffect(() => {
     if (isOpen) {
-      setUnreadCount(0)
-      if (guestId) markMessagesAsRead(guestId, 'GUEST')
+      if (guestId) {
+        const markAsRead = async () => {
+          await markMessagesAsRead(guestId, 'GUEST')
+        }
+        markAsRead()
+      }
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }, [messages, isOpen, guestId])
@@ -134,7 +143,10 @@ export default function GuestChat() {
         </div>
       ) : (
         <button
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            setIsOpen(true)
+            setUnreadCount(0)
+          }}
           className="relative w-14 h-14 bg-orange-600 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 hover:bg-orange-700 transition-all"
         >
           <MessageCircle className="w-6 h-6" />
