@@ -8,9 +8,10 @@ import { createClient } from '@supabase/supabase-js'
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 
+// Menggunakan SERVICE_ROLE_KEY agar bisa bypass blokir RLS saat upload
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY! 
 )
 
 export async function getDesigns(search: string = "", page: number = 1, limit: number = 5) {
@@ -46,11 +47,19 @@ export async function uploadDesign(formData: FormData) {
   const ext = file.name.split('.').pop()
   const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
 
+  // Konversi File ke Buffer agar stabil di Node.js/Vercel
+  const arrayBuffer = await file.arrayBuffer()
+  const buffer = Buffer.from(arrayBuffer)
+
   const { error: uploadError } = await supabase.storage
     .from('designs')
-    .upload(filename, file, { cacheControl: '3600', upsert: false })
+    .upload(filename, buffer, { 
+      cacheControl: '3600', 
+      upsert: false,
+      contentType: file.type
+    })
 
-  if (uploadError) throw new Error('Gagal mengunggah gambar ke server')
+  if (uploadError) throw new Error('Gagal mengunggah gambar: ' + uploadError.message)
 
   const { data: { publicUrl } } = supabase.storage.from('designs').getPublicUrl(filename)
 
@@ -87,9 +96,16 @@ export async function editDesign(id: string, formData: FormData) {
     const ext = file.name.split('.').pop()
     const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
 
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
     const { error: uploadError } = await supabase.storage
       .from('designs')
-      .upload(filename, file, { cacheControl: '3600', upsert: false })
+      .upload(filename, buffer, { 
+        cacheControl: '3600', 
+        upsert: false,
+        contentType: file.type 
+      })
 
     if (uploadError) throw new Error('Gagal mengunggah gambar baru')
 
@@ -106,6 +122,15 @@ export async function editDesign(id: string, formData: FormData) {
 export async function deleteDesign(id: string) {
   const auth = await verifyAuth()
   if (!auth) throw new Error('Akses ditolak')
+
+  const design = await prisma.design.findUnique({ where: { id } })
+  
+  if (design && design.imageUrl) {
+    const filename = design.imageUrl.split('/').pop()
+    if (filename) {
+      await supabase.storage.from('designs').remove([filename])
+    }
+  }
 
   await prisma.design.delete({ where: { id } })
   
