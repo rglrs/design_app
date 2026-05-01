@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { Toaster } from "@/components/ui/sonner"
 import { uploadDesign, deleteDesign, editDesign, getDesigns } from './actions'
@@ -40,27 +41,26 @@ export default function AdminPage() {
   const [price, setPrice] = useState("")
   const [description, setDescription] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
-  const loadDesigns = async () => {
+  const loadDesigns = useCallback(async () => {
     try {
       const result = await getDesigns(search, page, 5)
       setDesigns(result.data)
       setTotalPages(result.totalPages)
-    } catch (error) {
+    } catch {
       toast.error("Gagal memuat data desain")
     }
-  }
+  }, [search, page])
 
   useEffect(() => {
     const timer = setTimeout(() => {
       loadDesigns()
     }, 400)
     return () => clearTimeout(timer)
-  }, [search, page])
+  }, [loadDesigns])
 
   const resetForm = () => {
     setEditId(null)
@@ -83,7 +83,6 @@ export default function AdminPage() {
     e.preventDefault()
     setIsLoading(true)
     const formData = new FormData(e.currentTarget)
-
     try {
       if (editId) {
         await editDesign(editId, formData)
@@ -94,8 +93,12 @@ export default function AdminPage() {
       }
       resetForm()
       await loadDesigns()
-    } catch (error: any) {
-      toast.error(error.message || "Terjadi kesalahan")
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            toast.error(error.message || "Terjadi kesalahan")
+        } else {
+            toast.error("Terjadi kesalahan")
+        }
     } finally {
       setIsLoading(false)
     }
@@ -106,7 +109,7 @@ export default function AdminPage() {
       await deleteDesign(id)
       toast.success("Desain berhasil dihapus!")
       await loadDesigns()
-    } catch (error) {
+    } catch {
       toast.error("Gagal menghapus desain")
     }
   }
@@ -118,9 +121,9 @@ export default function AdminPage() {
         
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-black/5 pb-4 md:pb-6 gap-4">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-          <a href="/" className="text-sm font-medium hover:text-orange-600 transition-colors w-fit">
+          <Link href="/" className="text-sm font-medium hover:text-orange-600 transition-colors w-fit">
             Lihat Website &rarr;
-          </a>
+          </Link>
         </div>
 
         <section className="bg-white p-5 sm:p-8 rounded-2xl shadow-sm border border-zinc-200">
@@ -152,7 +155,7 @@ export default function AdminPage() {
                 />
               </div>
             </div>
-
+            
             <div className="space-y-2">
               <label className="text-sm font-bold text-zinc-700">Deskripsi</label>
               <textarea
@@ -188,6 +191,7 @@ export default function AdminPage() {
               >
                 {isLoading ? "Memproses..." : (editId ? "Simpan Perubahan" : "Upload Desain")}
               </button>
+              
               {editId && (
                 <button
                   type="button"
@@ -205,6 +209,7 @@ export default function AdminPage() {
         <section className="bg-white p-5 sm:p-8 rounded-2xl shadow-sm border border-zinc-200">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6 gap-4">
             <h2 className="text-lg md:text-xl font-bold">Daftar Desain</h2>
+            
             <div className="relative w-full md:w-72">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -256,6 +261,7 @@ export default function AdminPage() {
                         >
                           Edit
                         </button>
+                        
                         <AlertDialog>
                           <AlertDialogTrigger className="text-red-500 font-medium hover:text-red-700 transition-colors text-xs sm:text-sm">
                             Hapus
@@ -284,6 +290,7 @@ export default function AdminPage() {
                     </td>
                   </tr>
                 ))}
+                
                 {designs.length === 0 && (
                   <tr>
                     <td colSpan={4} className="py-8 text-center text-zinc-500 text-sm">
@@ -299,16 +306,24 @@ export default function AdminPage() {
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPage(p => Math.max(1, p - 1));
+                    }}
                     className={page <= 1 ? "pointer-events-none opacity-50 cursor-not-allowed" : "cursor-pointer"}
                   />
                 </PaginationItem>
                 
                 {Array.from({ length: totalPages }).map((_, i) => (
                   <PaginationItem key={i}>
-                    <PaginationLink 
-                      onClick={() => setPage(i + 1)}
+                    <PaginationLink
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPage(i + 1);
+                      }}
                       isActive={page === i + 1}
                       className="cursor-pointer"
                     >
@@ -318,8 +333,12 @@ export default function AdminPage() {
                 ))}
                 
                 <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPage(p => Math.min(totalPages, p + 1));
+                    }}
                     className={page >= totalPages ? "pointer-events-none opacity-50 cursor-not-allowed" : "cursor-pointer"}
                   />
                 </PaginationItem>

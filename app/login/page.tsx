@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useActionState } from 'react'
+import Link from 'next/link'
 import { loginAction } from './actions'
 
 export default function LoginPage() {
@@ -14,14 +15,12 @@ export default function LoginPage() {
           <span className="text-xl sm:text-2xl font-bold tracking-tighter block mb-2">VISUAL ARCHIVE</span>
           <h1 className="text-sm sm:text-base text-zinc-500">Autentikasi Dashboard</h1>
         </div>
-
         <form action={formAction} className="bg-white p-6 sm:p-10 rounded-2xl sm:rounded-3xl shadow-sm border border-black/5 space-y-5 sm:space-y-6">
           {state?.error && (
             <div className="p-3 sm:p-4 bg-red-50 text-red-600 text-xs sm:text-sm font-medium rounded-xl border border-red-100">
               {state.error}
             </div>
           )}
-
           <div className="space-y-2">
             <label className="text-xs sm:text-sm font-bold text-zinc-900">Username</label>
             <input
@@ -32,7 +31,6 @@ export default function LoginPage() {
               className="w-full p-3 sm:p-4 bg-zinc-50 border border-zinc-200 rounded-xl text-sm sm:text-base text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-orange-600 focus:ring-1 focus:ring-orange-600 transition-all"
             />
           </div>
-
           <div className="space-y-2">
             <label className="text-xs sm:text-sm font-bold text-zinc-900">Password</label>
             <div className="relative">
@@ -61,7 +59,6 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
-
           <button
             type="submit"
             disabled={isPending}
@@ -71,9 +68,9 @@ export default function LoginPage() {
           </button>
           
           <div className="text-center mt-4 sm:mt-6">
-            <a href="/" className="text-xs sm:text-sm font-medium text-zinc-400 hover:text-orange-600 transition-colors">
+            <Link href="/" className="text-xs sm:text-sm font-medium text-zinc-400 hover:text-orange-600 transition-colors">
               &larr; Kembali ke Katalog
-            </a>
+            </Link>
           </div>
         </form>
       </div>

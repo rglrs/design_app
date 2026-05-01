@@ -1,11 +1,12 @@
 'use server'
+
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { verifyAuth } from '@/lib/auth'
 import { createClient } from '@supabase/supabase-js'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-const MAX_FILE_SIZE = 5 * 1024 * 1024 
+const MAX_FILE_SIZE = 5 * 1024 * 1024
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -70,7 +71,14 @@ export async function editDesign(id: string, formData: FormData) {
   const price = Number(formData.get('price'))
   const file = formData.get('image') as File | null
 
-  const dataToUpdate: any = { title, description, price }
+  type DataToUpdate = {
+    title: string;
+    description: string;
+    price: number;
+    imageUrl?: string;
+  }
+
+  const dataToUpdate: DataToUpdate = { title, description, price }
 
   if (file && file.size > 0) {
     if (!ALLOWED_TYPES.includes(file.type)) throw new Error('Format file harus JPG, PNG, atau WEBP')

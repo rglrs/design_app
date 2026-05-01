@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import Link from 'next/link'
 import DesignCard from './components/DesignCard'
 import SearchFilter from './components/SearchFilter'
 import {
@@ -21,7 +22,7 @@ export const metadata = {
 }
 
 type PageProps = {
-  params: Promise<{}>;
+  params: Promise<Record<string, never>>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
@@ -58,8 +59,8 @@ export default async function Home(props: PageProps) {
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
           <span className="text-lg md:text-xl font-bold tracking-tighter">VISUAL ARCHIVE</span>
           <div className="flex gap-4 md:gap-8 text-sm font-medium">
-            <a href="#" className="hover:text-orange-600 transition-colors">Katalog</a>
-            <a href="/login" className="hover:text-orange-600 transition-colors">Admin</a>
+            <Link href="#" className="hover:text-orange-600 transition-colors">Katalog</Link>
+            <Link href="/login" className="hover:text-orange-600 transition-colors">Admin</Link>
           </div>
         </div>
       </nav>
@@ -88,7 +89,7 @@ export default async function Home(props: PageProps) {
         
         {designs.length === 0 && (
           <div className="text-center py-20 text-zinc-500">
-            Tidak ada desain yang cocok dengan pencarian "{q}"
+            Tidak ada desain yang cocok dengan pencarian &quot;{q}&quot;
           </div>
         )}
 
@@ -97,7 +98,7 @@ export default async function Home(props: PageProps) {
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious 
-                  href={page > 1 ? `/?q=${q}&page=${page - 1}` : "#"} 
+                  href={page > 1 ? `/?q=${q}&page=${page - 1}` : "#"}
                   className={page <= 1 ? "pointer-events-none opacity-50" : ""}
                 />
               </PaginationItem>
@@ -115,7 +116,7 @@ export default async function Home(props: PageProps) {
               
               <PaginationItem>
                 <PaginationNext 
-                  href={page < totalPages ? `/?q=${q}&page=${page + 1}` : "#"} 
+                  href={page < totalPages ? `/?q=${q}&page=${page + 1}` : "#"}
                   className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
                 />
               </PaginationItem>
@@ -126,7 +127,7 @@ export default async function Home(props: PageProps) {
 
       <footer className="border-t border-black/5 py-8 md:py-12">
         <div className="max-w-7xl mx-auto px-4 md:px-6 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
-          <p className="text-sm text-zinc-400">© 2026 Visual Archive. All rights reserved.</p>
+          <p className="text-sm text-zinc-400">&copy; 2026 Visual Archive. All rights reserved.</p>
           <div className="flex gap-4 md:gap-6">
             <div className="w-10 h-10 rounded-full border border-zinc-200 flex items-center justify-center hover:bg-black hover:text-white transition-all cursor-pointer">IG</div>
             <div className="w-10 h-10 rounded-full border border-zinc-200 flex items-center justify-center hover:bg-black hover:text-white transition-all cursor-pointer">TW</div>

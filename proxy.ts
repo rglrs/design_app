@@ -15,7 +15,7 @@ export default async function proxy(request: NextRequest) {
     
     try {
       await jwtVerify(session, key)
-    } catch (error) {
+    } catch {
       return NextResponse.redirect(new URL('/login', request.url))
     }
   }

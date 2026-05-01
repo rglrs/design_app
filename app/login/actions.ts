@@ -1,11 +1,12 @@
 'use server'
+
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcrypt'
 import { encrypt } from '@/lib/auth'
 
-export async function loginAction(_prevState: any, formData: FormData) {
+export async function loginAction(_prevState: unknown, formData: FormData) {
   const username = formData.get('username') as string
   const password = formData.get('password') as string
 
